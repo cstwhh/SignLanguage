@@ -1,0 +1,45 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!200 &20000000
+ShaderVariantCollection:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_Name: PassthroughVariants
+  m_Shaders:
+    data:
+      first: {fileID: 4800000, guid: 4a2714c8f776648479c759c998cdbf16, type: 3}
+      second:
+        variants:
+        - keywords: LEAP_FORMAT_IR
+          passType: 0
+        - keywords: LEAP_FORMAT_RGB
+          passType: 0
+    data:
+      first: {fileID: 4800000, guid: 8e5b00b7c29383f48b52edad41699d70, type: 3}
+      second:
+        variants:
+        - keywords: LEAP_FORMAT_IR
+          passType: 0
+        - keywords: LEAP_FORMAT_RGB
+          passType: 0
+    data:
+      first: {fileID: 4800000, guid: a944a7b9f5c8740469de79e2e07b4437, type: 3}
+      second:
+        variants:
+        - keywords: LEAP_FORMAT_IR
+          passType: 0
+        - keywords: LEAP_FORMAT_RGB
+          passType: 0
+    data:
+      first: {fileID: 4800000, guid: 81a4a0b42b0c9974e810af349624a72b, type: 3}
+      second:
+        variants:
+        - keywords: LEAP_FORMAT_IR
+          passType: 0
+        - keywords: LEAP_FORMAT_RGB
+          passType: 0
+        - keywords: LEAP_FORMAT_IR USE_DEPTH_EFFECTS
+          passType: 0
+        - keywords: LEAP_FORMAT_RGB USE_DEPTH_EFFECTS
+          passType: 0
