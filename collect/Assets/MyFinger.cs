@@ -1,6 +1,10 @@
 ﻿using UnityEngine;
 using Leap;
 using System.Collections;
+using System.IO;
+using System;
+using System.Collections.Generic;
+using System.Text;
 
 public class MyFinger : MonoBehaviour { 
 	const int DIMENSION = 63;
@@ -21,7 +25,26 @@ public class MyFinger : MonoBehaviour {
 	}
 	
 	void Update () {
-		drawHand(getFingerData());
+		//drawHand(getFingerData());
+		float[] data = getFingerAbsoluteData ();
+		if (data == null) {
+			Debug.LogError("data is null");
+			return;
+		}
+		try {
+			FileStream file = new FileStream("test.txt", FileMode.Append);
+			StreamWriter sw = new StreamWriter(file);
+			for (int i = 0; i < data.Length; i++) {
+				sw.Write(data[i] + ",");
+			}
+			sw.Write(";\n");
+			sw.Close();
+		}
+		catch(IOException ex) {		
+			Console.WriteLine(ex.Message);
+			Console.ReadLine();
+			return ;
+		}
 	}
 	
 	public void draw(int[] vec) {
@@ -39,7 +62,7 @@ public class MyFinger : MonoBehaviour {
 		}
 		float[] data = new float[raw.Length - 3];
 		for (int i = 0; i < data.Length; i++) {
-			data[i] = raw[i + 3] - raw[i % 3];
+			data[i] = (raw[i + 3] - raw[i % 3]) / 2.0f;
 		}
 		return data;
 	}
