@@ -5,6 +5,8 @@ using System.IO;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using UnityEngine.Events;
+using UnityEngine.UI;
 
 public class MyFinger : MonoBehaviour { 
 	const int DIMENSION = 63;
@@ -18,7 +20,10 @@ public class MyFinger : MonoBehaviour {
 	public GameObject cylinderPrefab;
 	
 	public static object FingerType { get; internal set; }
-	
+
+	private bool collect = false;
+	private int collect_cnt = 0;
+
 	void Start () {
 		handController = new Controller();
 //		predict = new Predict();
@@ -26,19 +31,24 @@ public class MyFinger : MonoBehaviour {
 	
 	void Update () {
 		//drawHand(getFingerData());
+		if (!collect) {
+			return;
+		}
+		//Debug.LogError("colleting...");
 		float[] data = getFingerAbsoluteData ();
 		if (data == null) {
 			Debug.LogError("data is null");
 			return;
 		}
 		try {
-			FileStream file = new FileStream("test.txt", FileMode.Append);
+			FileStream file = new FileStream("data2.txt", FileMode.Append);
 			StreamWriter sw = new StreamWriter(file);
 			for (int i = 0; i < data.Length; i++) {
 				sw.Write(data[i] + ",");
 			}
-			sw.Write(";\n");
+			sw.Write("2\n");
 			sw.Close();
+			++ collect_cnt;
 		}
 		catch(IOException ex) {		
 			Console.WriteLine(ex.Message);
@@ -46,7 +56,22 @@ public class MyFinger : MonoBehaviour {
 			return ;
 		}
 	}
-	
+
+	void OnGUI()  
+	{  
+		//开始按钮  
+		if(GUI.Button(new Rect(0,10,100,30),"start"))  {  
+			Debug.LogError("start.");
+			collect = true;
+		}  
+		//结束按钮  
+		if(GUI.Button(new Rect(0,50,100,30),"finish"))  {  
+			Debug.LogError("finish. collect num is " + collect_cnt);
+			collect = false;
+		} 
+		
+	}  
+
 	public void draw(int[] vec) {
 		//drawHand(predict.getFinderData(vec));
 	}
@@ -162,6 +187,20 @@ public class MyFinger : MonoBehaviour {
 					drawLine(cnt++, i - 1, i);
 				}
 			}
+		}
+	}
+	public void OnClick(GameObject sender)
+	{
+		switch (sender.name)
+		{
+			case "start":
+				Debug.LogError("start");
+				break;
+			case "finish":
+				Debug.LogError("finish");
+				break;
+			default:
+				break;
 		}
 	}
 }
