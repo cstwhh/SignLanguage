@@ -26,27 +26,32 @@ x = data[:, :-1]
 x_abs_max = max(x.max(), -x.min()) + 1 #TODO
 x /= x_abs_max
 
-train_y = data[:, -1:].reshape(-1, ).astype("int32")
-train_y = np_utils.to_categorical(train_y, num_classes) # One-hot encode the labels
-
-train_x = x
-
 test_set = np.array(sample(data, test_len))
 # print test_set
 test_x = test_set[:, :-1]
 test_y = test_set[:, -1:].reshape(-1, ).astype("int32")
 test_y = np_utils.to_categorical(test_y, num_classes) # One-hot encode the labels
 
+for target in test_set:
+	for i in xrange(0, len(data) - 1):
+		if (data[i] == target).all():
+			data = np.delete(data, i, 0)
+
+train_x = data[:, :-1]
+train_y = data[:, -1:].reshape(-1, ).astype("int32")
+train_y = np_utils.to_categorical(train_y, num_classes) # One-hot encode the labels
+
+
 # print train_x
 # print train_y
 # print "=" * 10	
 # print test_x
 # print test_y
-print train_x.shape
-print train_y.shape
-print "=" * 10	
-print test_x.shape
-print test_y.shape
+print "train_x.shape: " + str(train_x.shape)
+print "train_y.shape: " + str(train_y.shape)
+print "=" * 20	
+print "test_x.shape: " + str(test_x.shape)
+print "test_y.shape: " + str(test_y.shape)
 
 if task_is_train:
 	inp = Input(shape=(finger_data_dim,)) # Our input is a 1D vector of size 63
