@@ -1,6 +1,7 @@
 import numpy as np
 from keras.utils import np_utils # utilities for one-hot encoding of ground truth values
 from random import sample
+import random
 
 # para
 task_is_train = True
@@ -12,7 +13,7 @@ batch_size = 128 # in each iteration, we consider 128 training examples at once
 num_epochs = 20 # we iterate twenty times over the entire training set
 hidden_size = 512 # there will be 512 neurons in both hidden layers
 saved_model_name = "model.h5"
-finger_data_dim = 63
+finger_data_dim = 6
 
 
 
@@ -25,20 +26,34 @@ x /= x_abs_max
 print data
 print "*" * 30
 
+train_len = len(data) - test_len
+test_set = np.empty((test_len, finger_data_dim + 1))
+train_set = np.empty((train_len, finger_data_dim + 1))
 
-test_set = np.array(sample(data, test_len))
-# print test_set
+p = test_len * 1.0 / len(data)
+
+test_size = 0
+train_size = 0
+
+for v in data:
+	if (test_size < test_len) and (random.random() <= p):
+		test_set[test_size] = v
+		test_size = test_size + 1
+	else:
+		if(train_size < train_len):
+			train_set[train_size] = v
+			train_size = train_size + 1
+		else:
+			test_set[test_size] = v
+			test_size = test_size + 1
+
 test_x = test_set[:, :-1]
 test_y = test_set[:, -1:].reshape(-1, ).astype("int32")
 test_y = np_utils.to_categorical(test_y, num_classes) # One-hot encode the labels
 
-for target in test_set:
-	for i in xrange(0, len(data) - 1):
-		if (data[i] == target).all():
-			data = np.delete(data, i, 0)
 
-train_x = data[:, :-1]
-train_y = data[:, -1:].reshape(-1, ).astype("int32")
+train_x = train_set[:, :-1]
+train_y = train_set[:, -1:].reshape(-1, ).astype("int32")
 train_y = np_utils.to_categorical(train_y, num_classes) # One-hot encode the labels
 
 
