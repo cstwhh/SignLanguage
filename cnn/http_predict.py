@@ -12,17 +12,21 @@ from keras.utils import np_utils, generic_utils
 from six.moves import range
 import numpy as np
 from keras import backend as K
+import time
 # K.set_image_dim_ordering('th')
 
-ip = '183.172.139.115'
-model = load_model("model.h5")
+ip = '183.172.138.76'
+ensure_delta = 500
 finger_data_dim = 63
 num_classes = 6
 
 httpClient = None
+model = load_model("model.h5")
 sign = ["飞机","电话","你","坏","拳","七"]
 last_pre_sign = ""
 null_data_notify = "没有手势数据"
+last_sign_produce_time = time.time()
+
 try:
 	while True:  
 		httpClient = httplib.HTTPConnection(ip, 8000, timeout = 30)
@@ -32,6 +36,7 @@ try:
 		if(len(response_arr) == 1):
 			if(last_pre_sign != null_data_notify):
 				last_pre_sign = null_data_notify
+				last_sign_produce_time = last_sign_produce_time - ensure_delta
 				print last_pre_sign
 			continue
 		inp = map(float, response_arr)
@@ -48,14 +53,16 @@ try:
 		# print pre_type
 		pre_sign = sign[pre_type]
 		if(pre_sign != last_pre_sign):
-			last_pre_sign = pre_sign
-			print pre_sign
+			passed_time = (time.time() - last_sign_produce_time) * 1000.0
+			# print "passed_time: " + str(passed_time) + "ms"
+			if(passed_time > ensure_delta):
+				last_sign_produce_time = time.time()
+				last_pre_sign = pre_sign
+				print pre_sign
 		else:
 			continue
 
-		oup = "";
-		for i in range(num_classes):
-			oup += str(proba[0][i]) + "?";
+		oup = str(pre_type);
 
 		httpClient = httplib.HTTPConnection(ip, 8000, timeout = 30)
 		httpClient.request('GET', '/' + oup);
