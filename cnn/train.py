@@ -7,10 +7,10 @@ from keras.models import load_model
 import random
 
 # para
-task_is_train = True
+task_is_train = False
 
-test_len = 500
-num_classes = 3
+test_len = 3000
+num_classes = 6
 
 batch_size = 128 # in each iteration, we consider 128 training examples at once
 num_epochs = 20 # we iterate twenty times over the entire training set
@@ -25,6 +25,8 @@ data = np.loadtxt("../collect/data.txt", delimiter = ",")
 x = data[:, :-1]
 x_abs_max = max(x.max(), -x.min()) + 1 #TODO
 x /= x_abs_max
+
+print "x_abs_max is " + str(x_abs_max)
 
 train_len = len(data) - test_len
 test_set = np.empty((test_len, finger_data_dim + 1))
@@ -82,7 +84,7 @@ if task_is_train:
 
 	model.fit(train_x, train_y, # Train the model using the training set...
 	          batch_size=batch_size, nb_epoch=num_epochs,
-	          verbose=1, validation_split=0.1) # ...holding out 10% of the data for validation
+	          verbose=1, validation_split=0.08) # ...holding out 10% of the data for validation
 	print "\n"
 else:
 	model = load_model(saved_model_name)
