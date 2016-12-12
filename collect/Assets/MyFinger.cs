@@ -24,7 +24,7 @@ public class MyFinger : MonoBehaviour {
 
 
 	//para
-	private bool taskIsCollect = false;
+	private bool taskIsCollect = true;
 	private string collectName = "data";
 	private string collectType = "0";
 
@@ -92,7 +92,8 @@ public class MyFinger : MonoBehaviour {
 			return;
 		}
 		try {
-			FileStream file = new FileStream(collectName + collectType + ".txt", FileMode.Append);
+			string folder = "../data/" + collectName;
+			FileStream file = new FileStream(folder + collectType + ".txt", FileMode.Append);
 			StreamWriter sw = new StreamWriter(file);
 			for (int i = 0; i < data.Length; i++) {
 				sw.Write(data[i] + ",");
