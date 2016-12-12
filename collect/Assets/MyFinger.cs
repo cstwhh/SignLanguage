@@ -7,6 +7,9 @@ using System.Collections.Generic;
 using System.Text;
 using UnityEngine.Events;
 using UnityEngine.UI;
+using System.Net;
+using System.Threading;
+using System.Linq;
 
 public class MyFinger : MonoBehaviour { 
 	const int DIMENSION = 63;
@@ -15,38 +18,86 @@ public class MyFinger : MonoBehaviour {
 	private Controller handController;
 	private GameObject[] spheres = new GameObject[SPHERE_NUM];
 	private GameObject[] cylinders = new GameObject[CYLINER_NUM];
-//	private Predict predict;
 	public GameObject spherePrefab;
 	public GameObject cylinderPrefab;
-	
 	public static object FingerType { get; internal set; }
 
+
+	//para
+	private bool taskIsCollect = false;
+	private string collectName = "data";
+	private string collectType = "0";
+
+	private string ip = "http://183.172.138.76:8000/";
+	//collect
 	private bool collect = false;
 	private int collect_cnt = 0;
+	//http and predict
+    static HttpListener httpListener = null;
+	static string[] sign = {"飞机","电话","你","坏","拳","七"};
+	string predictSign = "";
+
 
 	void Start () {
 		handController = new Controller();
-//		predict = new Predict();
 	}
 	
 	void Update () {
-		//drawHand(getFingerData());
+		
+		if (httpListener == null) {
+            httpListener = new HttpListener();
+
+            httpListener.AuthenticationSchemes = AuthenticationSchemes.Anonymous;
+            httpListener.Prefixes.Add(ip);
+            httpListener.Start();
+
+            new Thread(new ThreadStart(delegate {
+                while (true) {
+                    HttpListenerContext httpListenerContext = httpListener.GetContext();
+                    string query = httpListenerContext.Request.Url.ToString();
+                    string str = query.Split('/')[3];
+
+                    httpListenerContext.Response.StatusCode = 200;
+                    if (str.Length == 0) {
+                        using (StreamWriter writer = new StreamWriter(httpListenerContext.Response.OutputStream)) {
+							float[] inp_data = getFingerAbsoluteData ();
+							if (inp_data == null) {
+								predictSign = "";
+								continue;
+							}
+							else {
+								String sendData = string.Join(" ", new List<float>(inp_data).ConvertAll(i => i.ToString()).ToArray());
+                            	writer.WriteLine(sendData);
+							}
+                        }
+                    } else {
+						predictSign = sign[int.Parse(str)];
+						// Debug.LogError(predictSign);
+                        using (StreamWriter writer = new StreamWriter(httpListenerContext.Response.OutputStream)) {
+                            writer.WriteLine("I've got your predict model");
+                        }
+                    }
+                    Thread.Sleep(10);
+                }
+            })).Start();
+        }
+		//collect
 		if (!collect) {
 			return;
 		}
 		//Debug.LogError("colleting...");
 		float[] data = getFingerAbsoluteData ();
 		if (data == null) {
-			Debug.LogError("data is null");
+			//Debug.LogError("data is null");
 			return;
 		}
 		try {
-			FileStream file = new FileStream("data2.txt", FileMode.Append);
+			FileStream file = new FileStream(collectName + collectType + ".txt", FileMode.Append);
 			StreamWriter sw = new StreamWriter(file);
 			for (int i = 0; i < data.Length; i++) {
 				sw.Write(data[i] + ",");
 			}
-			sw.Write("2\n");
+			sw.Write(collectType + "\n");
 			sw.Close();
 			++ collect_cnt;
 		}
@@ -59,26 +110,31 @@ public class MyFinger : MonoBehaviour {
 
 	void OnGUI()  
 	{  
-		//开始按钮  
-		if(GUI.Button(new Rect(0,10,100,30),"start"))  {  
-			Debug.LogError("start.");
-			collect = true;
-		}  
-		//结束按钮  
-		if(GUI.Button(new Rect(0,50,100,30),"finish"))  {  
-			Debug.LogError("finish. collect num is " + collect_cnt);
-			collect = false;
-		} 
+		if (taskIsCollect) 
+		{
+			//开始按钮  
+			if (GUI.Button (new Rect (0, 10, 100, 30), "start")) {  
+					Debug.LogError ("start.");
+					collect = true;
+			}  
+			//结束按钮  
+			if (GUI.Button (new Rect (0, 50, 100, 30), "finish")) {  
+					Debug.LogError ("finish. collect num is " + collect_cnt);
+					collect = false;
+			} 
+			//显示采集数据的数量
+			if(GUI.Button(new Rect(0, 90, 100, 30), collect_cnt.ToString())) {
+
+			}
+		}
+		else {
+			if (GUI.Button (new Rect (0, 10, 100, 30), predictSign)) {  
+
+			}  
+		}
 		
 	}  
 
-	public void draw(int[] vec) {
-		//drawHand(predict.getFinderData(vec));
-	}
-	
-	public void drawRock(int[] vec) {
-		//MyImage.change(predict.getFingerRock(vec));
-	}
 	
 	private float[] getFingerData() {
 		float[] raw = getFingerAbsoluteData();
@@ -96,7 +152,7 @@ public class MyFinger : MonoBehaviour {
 		float[] ret = null;
 		
 		foreach (Hand hand in handController.Frame().Hands) {
-			if (hand.IsLeft) {
+			if (hand.IsRight) {
 				if (ret == null) {
 					ret = new float[DIMENSION];
 				}
@@ -128,79 +184,4 @@ public class MyFinger : MonoBehaviour {
 		return ret;
 	}
 	
-	void drawLine(int id, int u, int v) {
-		Vector3 p0 = spheres[u].transform.position;
-		Vector3 p1 = spheres[v].transform.position;
-		
-		cylinders[id].transform.position = (p1 - p0) / 2.0f + p0;
-		Vector3 v3T = cylinders[id].transform.localScale;
-		v3T.y = (p1 - p0).magnitude / 2.0f;
-		cylinders[id].transform.localScale = v3T;
-		cylinders[id].transform.rotation = Quaternion.FromToRotation(Vector3.up, p1 - p0);
-	}
-	
-	public void drawHand(float[] fingerData) {
-		if (fingerData == null) {
-			for (int i = 0; i < SPHERE_NUM; i++) {
-				if (spheres[i] != null) {
-					Destroy(spheres[i]);
-					spheres[i] = null;
-				}
-			}
-			for (int i = 0; i < CYLINER_NUM; i++) {
-				if (cylinders[i] != null) {
-					Destroy(cylinders[i]);
-					cylinders[i] = null;
-				}
-			}
-		} else {
-			for (int i = 0; i < SPHERE_NUM; i++) {
-				if (spheres[i] == null) {
-					//spheres[i] = Instantiate(spherePrefab); //GameObject.CreatePrimitive(PrimitiveType.Sphere);
-					spheres[i] = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-					spheres[i].transform.position = Vector3.zero;
-				}
-				if (i == 0) {
-					spheres[i].transform.position = Vector3.zero;
-					spheres[i].transform.localScale = new Vector3(25.0f, 25.0f, 25.0f);
-				} else {
-					Vector3 aimPos = new Vector3(-fingerData[i * 3 - 3], fingerData[i * 3 - 2], fingerData[i * 3 - 1]);
-					if (spheres[i].transform.position == Vector3.zero) {
-						spheres[i].transform.position = aimPos;
-					} else {
-						spheres[i].transform.position = spheres[i].transform.position * 0.5f + aimPos * 0.5f;
-					}
-					spheres[i].transform.localScale = new Vector3(15.0f, 15.0f, 15.0f);
-				}
-				spheres[i].GetComponent<Renderer>().material.color = Color.red;
-			}
-			for (int i = 0; i < CYLINER_NUM; i++) {
-				if (cylinders[i] == null) {
-					//cylinders[i] = Instantiate(cylinderPrefab); //GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-					cylinders[i] = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-					cylinders[i].transform.localScale = new Vector3(5.0f, 15.0f, 5.0f);
-				}
-			}
-			int cnt = 0;
-			for (int i = 1; i < SPHERE_NUM; i++) {
-				if (i % 4 != 1) {
-					drawLine(cnt++, i - 1, i);
-				}
-			}
-		}
-	}
-	public void OnClick(GameObject sender)
-	{
-		switch (sender.name)
-		{
-			case "start":
-				Debug.LogError("start");
-				break;
-			case "finish":
-				Debug.LogError("finish");
-				break;
-			default:
-				break;
-		}
-	}
 }
