@@ -18,28 +18,28 @@ public class MyFinger : MonoBehaviour {
 	private Controller handController;
 	private GameObject[] spheres = new GameObject[SPHERE_NUM];
 	private GameObject[] cylinders = new GameObject[CYLINER_NUM];
-//	private Predict predict;
 	public GameObject spherePrefab;
 	public GameObject cylinderPrefab;
-	
 	public static object FingerType { get; internal set; }
 
+
+	//para
+	private bool taskIsCollect = false;
+	private string collectName = "data";
+	private string collectType = "0";
+
+	private string ip = "http://183.172.138.76:8000/";
+	//collect
 	private bool collect = false;
 	private int collect_cnt = 0;
-	
-	//http
-	
+	//http and predict
     static HttpListener httpListener = null;
-    static Dictionary<string,float> oup;
 	static string[] sign = {"飞机","电话","你","坏","拳","七"};
-	string[] tags = {"1","1","1","1","1","1"};
-    static bool updated = false;
-    static string sendData = "haha";
+	string predictSign = "";
+
 
 	void Start () {
 		handController = new Controller();
-		oup = new Dictionary<string, float>();
-//		predict = new Predict();
 	}
 	
 	void Update () {
@@ -48,22 +48,21 @@ public class MyFinger : MonoBehaviour {
             httpListener = new HttpListener();
 
             httpListener.AuthenticationSchemes = AuthenticationSchemes.Anonymous;
-            httpListener.Prefixes.Add("http://183.172.139.115:8000/");
+            httpListener.Prefixes.Add(ip);
             httpListener.Start();
+
             new Thread(new ThreadStart(delegate {
                 while (true) {
                     HttpListenerContext httpListenerContext = httpListener.GetContext();
                     string query = httpListenerContext.Request.Url.ToString();
-					//Debug.LogError(query);
                     string str = query.Split('/')[3];
 
                     httpListenerContext.Response.StatusCode = 200;
-                    //meide zhinengyingyuma!!!!!
                     if (str.Length == 0) {
                         using (StreamWriter writer = new StreamWriter(httpListenerContext.Response.OutputStream)) {
 							float[] inp_data = getFingerAbsoluteData ();
 							if (inp_data == null) {
-								Debug.LogError("response data is null");
+								predictSign = "";
 								continue;
 							}
 							else {
@@ -72,8 +71,8 @@ public class MyFinger : MonoBehaviour {
 							}
                         }
                     } else {
-						tags = str.Split('?');
-                        updated = true;
+						predictSign = sign[int.Parse(str)];
+						// Debug.LogError(predictSign);
                         using (StreamWriter writer = new StreamWriter(httpListenerContext.Response.OutputStream)) {
                             writer.WriteLine("I've got your predict model");
                         }
@@ -82,23 +81,6 @@ public class MyFinger : MonoBehaviour {
                 }
             })).Start();
         }
-		if (updated) 
-		{
-			updated = false;
-			Debug.LogError (tags.Length);
-			for (int i = 0; i < tags.Length - 1; i++) {
-					//Debug.LogError (tags [i].ToString());
-					oup.Add (sign[i],  float.Parse(tags[i]));
-					//oup [sign [i]] = float.Parse (tags [i]);
-			}
-			Dictionary<string, float> oup_SortedByP = oup.OrderByDescending (o => o.Value).ToDictionary (p => p.Key, o => o.Value);
-			
-			Debug.LogError (">>>>>>>>>>>>>>>>>>>>>>>>>>>");
-			foreach (KeyValuePair<string, float> item in oup_SortedByP) {
-					Debug.LogError (item.Key + ":" + item.Value.ToString ());
-			}
-			Debug.LogError ("<<<<<<<<<<<<<<<<<<<<<<<<<<<\n");
-		}
 		//collect
 		if (!collect) {
 			return;
@@ -106,16 +88,16 @@ public class MyFinger : MonoBehaviour {
 		//Debug.LogError("colleting...");
 		float[] data = getFingerAbsoluteData ();
 		if (data == null) {
-			Debug.LogError("data is null");
+			//Debug.LogError("data is null");
 			return;
 		}
 		try {
-			FileStream file = new FileStream("data5.txt", FileMode.Append);
+			FileStream file = new FileStream(collectName + collectType + ".txt", FileMode.Append);
 			StreamWriter sw = new StreamWriter(file);
 			for (int i = 0; i < data.Length; i++) {
 				sw.Write(data[i] + ",");
 			}
-			sw.Write("5\n");
+			sw.Write(collectType + "\n");
 			sw.Close();
 			++ collect_cnt;
 		}
@@ -128,16 +110,28 @@ public class MyFinger : MonoBehaviour {
 
 	void OnGUI()  
 	{  
-		//开始按钮  
-		if(GUI.Button(new Rect(0,10,100,30),"start"))  {  
-			Debug.LogError("start.");
-			collect = true;
-		}  
-		//结束按钮  
-		if(GUI.Button(new Rect(0,50,100,30),"finish"))  {  
-			Debug.LogError("finish. collect num is " + collect_cnt);
-			collect = false;
-		} 
+		if (taskIsCollect) 
+		{
+			//开始按钮  
+			if (GUI.Button (new Rect (0, 10, 100, 30), "start")) {  
+					Debug.LogError ("start.");
+					collect = true;
+			}  
+			//结束按钮  
+			if (GUI.Button (new Rect (0, 50, 100, 30), "finish")) {  
+					Debug.LogError ("finish. collect num is " + collect_cnt);
+					collect = false;
+			} 
+			//显示采集数据的数量
+			if(GUI.Button(new Rect(0, 90, 100, 30), collect_cnt.ToString())) {
+
+			}
+		}
+		else {
+			if (GUI.Button (new Rect (0, 10, 100, 30), predictSign)) {  
+
+			}  
+		}
 		
 	}  
 
