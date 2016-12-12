@@ -85,10 +85,8 @@ public class MyFinger : MonoBehaviour {
 		if (!collect) {
 			return;
 		}
-		//Debug.LogError("colleting...");
 		float[] data = getFingerAbsoluteData ();
 		if (data == null) {
-			//Debug.LogError("data is null");
 			return;
 		}
 		try {
@@ -114,13 +112,11 @@ public class MyFinger : MonoBehaviour {
 		if (taskIsCollect) 
 		{
 			//开始按钮  
-			if (GUI.Button (new Rect (0, 10, 100, 30), "start")) {  
-					Debug.LogError ("start.");
+			if (GUI.Button (new Rect (0, 10, 100, 30), "start")) { 
 					collect = true;
 			}  
 			//结束按钮  
 			if (GUI.Button (new Rect (0, 50, 100, 30), "finish")) {  
-					Debug.LogError ("finish. collect num is " + collect_cnt);
 					collect = false;
 			} 
 			//显示采集数据的数量
