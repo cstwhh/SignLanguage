@@ -24,11 +24,11 @@ public class MyFinger : MonoBehaviour {
 
 
 	//para
-	private bool taskIsCollect = true;
-	private string collectName = "data";
-	private string collectType = "0";
+	private bool taskIsCollect = false;
+	private string collectName = "lixue";
+	private string collectType = "5";
 
-	private string ip = "http://183.172.138.76:8000/";
+	private string ip = "http://183.172.137.106:8000/";
 	//collect
 	private bool collect = false;
 	private int collect_cnt = 0;
@@ -125,7 +125,9 @@ public class MyFinger : MonoBehaviour {
 			}
 		}
 		else {
-			if (GUI.Button (new Rect (0, 10, 100, 30), predictSign)) {  
+			GUIStyle buttonStyle = new GUIStyle(GUI.skin.button);
+			buttonStyle.fontSize = 25;
+			if (GUI.Button (new Rect (620, 10, 150, 45), predictSign, buttonStyle)) {  
 
 			}  
 		}
