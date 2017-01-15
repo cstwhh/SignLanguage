@@ -5,23 +5,23 @@ from keras.layers import Input, Dense # the two types of neural network layer we
 from keras.utils import np_utils # utilities for one-hot encoding of ground truth values
 from keras.models import load_model
 import random
-
+import confusion_matrix
 # para
-task_is_train = False
+task_is_train = True
 
-test_len = 3000
+test_len = 1000
 num_classes = 6
 
 batch_size = 128 # in each iteration, we consider 128 training examples at once
 num_epochs = 20 # we iterate twenty times over the entire training set
 hidden_size = 512 # there will be 512 neurons in both hidden layers
-saved_model_name = "model.h5"
+saved_model_name = "lx_zy.h5"
 finger_data_dim = 63
 
 
 
 # read data file and slice train and test set
-data = np.loadtxt("../collect/data.txt", delimiter = ",")
+data = np.loadtxt("../data/data.txt", delimiter = ",")
 x = data[:, :-1]
 x_abs_max = max(x.max(), -x.min()) + 1 #TODO
 x /= x_abs_max
@@ -90,4 +90,5 @@ else:
 	model = load_model(saved_model_name)
 
 print model.evaluate(test_x, test_y, verbose=1) # Evaluate the trained model on the test set!
+confusion_matrix.get_confusion_matrix(model, test_x, test_y)
 model.save(saved_model_name)
